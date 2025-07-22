@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gene Chatbot</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+:root {
+    --primary-color: #6b46c1;       /* Purple */
+    --primary-dark: #553c9a;        /* Darker purple */
+    --sidebar-bg: #4a3b76;          /* Deep purple */
+    --main-bg: #ebf8ff;             /* Light blue background */
+    --message-user-bg: #a3bffa;     /* Soft blue */
+    --message-assistant-bg: #e9d8fd; /* Light purple */
+    --text-color: #2d3748;          /* Dark gray for readability */
+    --text-secondary: #4a5568;      /* Gray for secondary text */
+    --input-bg: #ffffff;            /* White input background */
+    --input-border: #cbd5e0;        /* Light gray border */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --transition: all 0.2s ease-in-out;
+    --border-radius: 8px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+    background-color: var(--main-bg);
+    height: 100vh;
+    display: flex;
+    line-height: 1.5;
+}
+
+.app-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 280px;
+    background-color: var(--sidebar-bg);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    color: white;
+    box-shadow: var(--shadow-md);
+    z-index: 10;
+}
+
+.sidebar-header {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 1rem;
+}
+
+.sidebar-header h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.gene-input-container {
+    padding: 0.75rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.gene-input-container input {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    color: white;
+    outline: none;
+    transition: var(--transition);
+}
+
+.gene-input-container input:focus {
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.3);
+}
+
+/* Main Content Styles */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    scroll-behavior: smooth;
+}
+
+.welcome-message {
+    margin: auto;
+    text-align: center;
+    padding: 2rem;
+    max-width: 600px;
+}
+
+.welcome-message h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.welcome-message p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* Input Area Styles */
+.input-container {
+    padding: 1.25rem;
+    position: relative;
+    background-color: white;
+    border-top: 1px solid var(--input-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.gene-indicator {
+    position: absolute;
+    top: -0.75rem;
+    left: 1.25rem;
+    background-color: var(--primary-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    color: white;
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+
+.input-box {
+    display: flex;
+    background-color: var(--input-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--input-border);
+    transition: var(--transition);
+}
+
+.input-box:focus-within {
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.input-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 1rem;
+    color: var(--text-color);
+    outline: none;
+    font-size: 1rem;
+}
+
+/* Button Styles */
+.btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.input-box .btn {
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    padding: 0 1.5rem;
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Message Styles */
+.message {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    max-width: 800px;
+    margin: 0 auto 0.75rem;
+    width: 100%;
+    border-radius: var(--border-radius);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.message.user {
+    background-color: var(--message-user-bg);
+    margin-left: auto;
+    border-top-right-radius: 0;
+}
+
+.message.assistant {
+    background-color: var(--message-assistant-bg);
+    border-top-left-radius: 0;
+}
+
+.avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+    font-weight: bold;
+}
+
+.content {
+    flex: 1;
+}
+
+.content p {
+    margin-bottom: 0.5rem;
+}
+
+.content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Typing Indicator */
+.typing {
+    opacity: 0.8;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.typing-dots div {
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: var(--text-secondary);
+    border-radius: 50%;
+    animation: typing 1s infinite ease-in-out;
+}
+
+/* Gene Change Message */
+.gene-change-message {
+    background-color: rgba(227, 242, 253, 0.8);
+    padding: 1rem;
+    margin: 1rem auto;
+    border-radius: var(--border-radius);
+    text-align: center;
+    border-left: 4px solid var(--primary-color);
+    backdrop-filter: blur(5px);
+    max-width: 800px;
+    width: 100%;
+    box-shadow: var(--shadow-sm);
+}
+
+.gene-change-message .content {
+    max-width: 100%;
+}
+
+.gene-change-message strong {
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.gene-change-message .summary-preview {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    line-height: 1.4;
+}
+
+/* System Message */
+.message.system {
+    background-color: rgba(245, 245, 245, 0.9);
+    border-left: 4px solid var(--text-secondary);
+    padding: 1rem;
+    margin: 0.5rem auto;
+    border-radius: var(--border-radius);
+    font-style: italic;
+    color: var(--text-secondary);
+    max-width: 800px;
+    width: 100%;
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        padding: 0.75rem;
+    }
+    
+    .gene-input-container {
+        flex-direction: row;
+    }
+    
+    .gene-input-container input {
+        flex: 1;
+    }
+    
+    .chat-container {
+        padding: 1rem;
+    }
+    
+    .message {
+        padding: 1rem;
+    }
+}
+
+/* Animation for new messages */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.new-message {
+    animation: pulse 0.3s ease;
+}
+
+    </style>
+
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Gene Chatbot</h2>
+                <button id="new-chat-btn" class="btn">
+                    <i class="fas fa-plus"></i> New Gene
+                </button>
+            </div>
+            <div class="gene-input-container">
+                <input type="text" id="gene-input" placeholder="Enter gene name (e.g., BRCA1)">
+                <button id="set-gene-btn" class="btn">
+                    <i class="fas fa-dna"></i> Set Gene
+                </button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="chat-container" id="chat-container">
+                
+                <div class="welcome-message" id="welcome-message">
+                    <h1>Gene Chatbot</h1>
+                    <p>Enter a gene name to start chatting about it</p>
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <div class="gene-indicator" id="gene-indicator">
+                    No gene selected
+                </div>
+                <div class="input-box">
+                    <input type="text" id="user-input" placeholder="Ask a question about the gene..." disabled>
+                    <button id="send-btn" class="btn" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const geneInput = document.getElementById('gene-input');
+            const setGeneBtn = document.getElementById('set-gene-btn');
+            const userInput = document.getElementById('user-input');
+            const sendBtn = document.getElementById('send-btn');
+            const chatContainer = document.getElementById('chat-container');
+            const welcomeMessage = document.getElementById('welcome-message');
+            const geneIndicator = document.getElementById('gene-indicator');
+            const newChatBtn = document.getElementById('new-chat-btn');
+
+            // Load any existing chat from session
+            loadChat();
+
+            // Set gene button click handler
+            setGeneBtn.addEventListener('click', setGene);
+            geneInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') setGene();
+            });
+
+            // Send message button click handler
+            sendBtn.addEventListener('click', sendMessage);
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendMessage();
+            });
+
+            // New chat button click handler
+            newChatBtn.addEventListener('click', function() {
+                geneInput.value = '';
+                geneInput.focus();
+            });
+
+            function setGene() {
+                const gene = geneInput.value.trim();
+                if (!gene) return;
+
+                // Clear the chat container (except welcome message)
+                while (chatContainer.firstChild) {
+                    if (chatContainer.firstChild.id !== 'welcome-message') {
+                        chatContainer.removeChild(chatContainer.firstChild);
+                    } else {
+                        break;
+                    }
+                }
+
+                fetch('/change_gene', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ gene: gene })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        geneIndicator.textContent = `Current Gene: ${data.gene}`;
+                        userInput.disabled = false;
+                        sendBtn.disabled = false;
+                        welcomeMessage.style.display = 'none';
+                        
+                        // Add a clear gene change message
+                        const geneChangeDiv = document.createElement('div');
+                        geneChangeDiv.className = 'gene-change-message';
+                        geneChangeDiv.innerHTML = `
+                            <div class="content">
+                                <strong>Now discussing gene: ${data.gene}</strong>
+                            </div>
+                        `;
+                        chatContainer.appendChild(geneChangeDiv);
+
+                        
+                        // Add the system message
+                        // addMessage('system', data.system_message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (!message) return;
+
+                // Add user message to chat
+                addMessage('user', message);
+                userInput.value = '';
+
+                // Show typing indicator
+                const typingIndicator = document.createElement('div');
+                typingIndicator.className = 'message assistant typing';
+                typingIndicator.innerHTML = `
+                    <div class="avatar"><i class="fas fa-robot"></i></div>
+                    <div class="content"><div class="typing-dots">
+                        <div></div><div></div><div></div>
+                    </div></div>
+                `;
+                chatContainer.appendChild(typingIndicator);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Send to server
+                fetch('/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question: message })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Remove typing indicator
+                    const indicators = document.querySelectorAll('.typing');
+                    indicators.forEach(ind => ind.remove());
+
+                    // Add assistant response
+                    addMessage('assistant', data.answer);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Remove typing indicator
+                    const indicators = document.querySelectorAll('.typing');
+                    indicators.forEach(ind => ind.remove());
+
+                    // Show error message
+                    addMessage('assistant', 'Sorry, an error occurred. Please try again.');
+                });
+            }
+
+            function addMessage(sender, message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const avatar = sender === 'user' 
+                    ? '<i class="fas fa-user"></i>' 
+                    : '<i class="fas fa-robot"></i>';
+                
+                messageDiv.innerHTML = `
+                    <div class="avatar">${avatar}</div>
+                    <div class="content">${message}</div>
+                `;
+                
+                chatContainer.appendChild(messageDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            function loadChat() {
+                fetch('/')
+                    .then(response => response.text())
+                    .then(html => {
+                        // This is a simplified approach - in a real app you'd have an API endpoint for chat history
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Check if there's a current gene in session
+                        if (doc.querySelector('[data-current-gene]')) {
+                            const gene = doc.querySelector('[data-current-gene]').getAttribute('data-current-gene');
+                            if (gene) {
+                                geneIndicator.textContent = `Current Gene: ${gene}`;
+                                userInput.disabled = false;
+                                sendBtn.disabled = false;
+                                welcomeMessage.style.display = 'none';
+                                
+                                // Here you would load the chat history for this gene
+                                // In a real app, you'd fetch this from your backend
+                            }
+                        }
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
